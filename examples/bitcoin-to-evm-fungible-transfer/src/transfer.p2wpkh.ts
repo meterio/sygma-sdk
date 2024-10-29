@@ -55,7 +55,7 @@ async function btcToEvmTransfer(): Promise<void> {
     bip32,
     mnemonic: MNEMONIC as string,
     derivationPath: DERIVATION_PATH as string,
-    network: networks.testnet,
+    network: networks.regtest,
     typeOfAddress: TypeOfAddress.P2WPKH,
   })) as { derivedNode: BIP32Interface };
 
@@ -75,7 +75,7 @@ async function btcToEvmTransfer(): Promise<void> {
 
   const size = calculateSize({
     utxoData: mapedUtxos,
-    network: networks.testnet,
+    network: networks.regtest,
     publicKey: derivedNode.publicKey,
     depositAddress: ADDRESS as unknown as string,
     domainId: DESTINATION_CHAIN_ID,
@@ -95,11 +95,12 @@ async function btcToEvmTransfer(): Promise<void> {
     utxoData: mapedUtxos,
     publicKey: derivedNode.publicKey,
     typeOfAddress: TypeOfAddress.P2WPKH,
-    network: networks.testnet,
+    network: networks.regtest,
     changeAddress: ADDRESS,
     feeRate: BigInt(Math.ceil(feeRate)),
     size: BigInt(size),
     sourceAddress: "",
+    environment: process.env.SYGMA_ENV
   };
 
   const transfer = await createBitcoinFungibleTransfer(transferParams);

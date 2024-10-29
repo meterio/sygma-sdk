@@ -13,6 +13,7 @@ import type {
 import { Environment } from '../types.js';
 
 import { localConfig } from './localConfig.js';
+import { configForRegtest } from './configForRegtest.js';
 
 export class Config {
   /**
@@ -28,6 +29,8 @@ export class Config {
   async init(environment: Environment): Promise<void> {
     if (environment === Environment.LOCAL) {
       this.configuration = localConfig;
+    } else if (environment === Environment.REGTEST) {
+      this.configuration = configForRegtest
     } else {
       const response = await fetch(this.getConfigUrl(environment));
       const config = (await response.json()) as SygmaConfig;

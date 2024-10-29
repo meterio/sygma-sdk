@@ -2,6 +2,7 @@ import { Environment } from '@buildwithsygma/core';
 
 const TESTNET_BLOCKSTREAM_URL = 'https://blockstream.info/testnet/api';
 const MAINNET_BLOCKSTREAM_URL = 'https://blockstream.info/api';
+const REGTEST_URL = 'http://35.87.116.195:18443';  // 添加regtest URL
 
 type FeeEstimates = Record<string, number>;
 
@@ -9,6 +10,8 @@ function getBlockStreamUrl(environment: Environment): string {
   switch (environment) {
     case Environment.MAINNET:
       return MAINNET_BLOCKSTREAM_URL;
+    case Environment.REGTEST:  // 添加regtest case
+      return REGTEST_URL;
     default:
       return TESTNET_BLOCKSTREAM_URL;
   }
@@ -38,6 +41,10 @@ export async function getFeeEstimates(
 ): Promise<number> {
   try {
     const url = getBlockStreamUrl(environment);
+    if (url === REGTEST_URL) {
+      // For regtest, we'll use a fixed fee rate
+      return 1; // 1 satoshi/vbyte, adjust as needed
+    }
     const response = await fetch(`${url}/fee-estimates`);
 
     const data = (await response.json()) as FeeEstimates;
@@ -60,6 +67,26 @@ export async function broadcastTransaction(
 ): Promise<string> {
   try {
     const url = getBlockStreamUrl(environment);
+
+    if (url === REGTEST_URL) {
+      const response = await fetch(REGTEST_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          jsonrpc: '1.0',
+          id: 'curltest',
+          method: 'sendrawtransaction',
+          params: [txHex],
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+      return data.result;
+    }
     const response = await fetch(`${url}/tx`, {
       method: 'POST',
       body: txHex,
@@ -83,6 +110,37 @@ export async function broadcastTransaction(
 export const fetchUTXOS = async (environment: Environment, address: string): Promise<Utxo[]> => {
   try {
     const url = getBlockStreamUrl(environment);
+
+    if (url === REGTEST_URL) {
+      const response = await fetch(REGTEST_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          jsonrpc: '1.0',
+          id: 'curltest',
+          method: 'listunspent',
+          params: [0, 9999999, [address]],
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+      return data.result.map((utxo: any) => ({
+        txid: utxo.txid,
+        vout: utxo.vout,
+        status: {
+          confirmed: utxo.confirmations > 0,
+          block_height: utxo.confirmations > 0 ? utxo.confirmations : 0,
+          block_hash: '',
+          block_time: 0,
+        },
+        value: Math.round(utxo.amount * 100000000), // Convert BTC to satoshis
+      }));
+    }
+
     const response = await fetch(`${url}/address/${address}/utxo`);
 
     const data = (await response.json()) as Utxo[];

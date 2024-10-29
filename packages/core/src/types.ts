@@ -12,6 +12,7 @@ export enum Environment {
   DEVNET = 'devnet',
   TESTNET = 'testnet',
   MAINNET = 'mainnet',
+  REGTEST = 'regtest',
 }
 
 export enum Network {
