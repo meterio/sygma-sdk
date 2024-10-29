@@ -115,13 +115,14 @@ export const fetchUTXOS = async (environment: Environment, address: string): Pro
       const response = await fetch(REGTEST_URL, {
         method: 'POST',
         body: JSON.stringify({
-          jsonrpc: '1.0',
+          jsonrpc: '2.0',
           id: 'curltest',
           method: 'listunspent',
-          params: [0, 9999999, [address]],
+          params: [1, 9999999, [address], true],
         }),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + Buffer.from('user:pass').toString('base64')
         },
       });
       const data = await response.json();
@@ -147,6 +148,7 @@ export const fetchUTXOS = async (environment: Environment, address: string): Pro
 
     return data;
   } catch (error) {
+    console.log('Failed to get utxos', error)
     throw new Error('Failed to get utxos');
   }
 };
