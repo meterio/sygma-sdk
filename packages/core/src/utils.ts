@@ -60,6 +60,7 @@ export function getSygmaScanLink(sourceHash: string, environment: Environment): 
     case Environment.TESTNET:
       return `https://scan.test.buildwithsygma.com/transfer/${sourceHash}`;
   }
+  throw new Error(`Scanner unavailable for environment: ${environment}`);
 }
 /**
  * Retrieves the environment metadata
