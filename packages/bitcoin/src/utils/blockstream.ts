@@ -72,13 +72,14 @@ export async function broadcastTransaction(
       const response = await fetch(REGTEST_URL, {
         method: 'POST',
         body: JSON.stringify({
-          jsonrpc: '1.0',
-          id: 'curltest',
+          jsonrpc: '2.0',
+          id: 'curltest', 
           method: 'sendrawtransaction',
           params: [txHex],
         }),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + Buffer.from('user:pass').toString('base64')
         },
       });
       const data = await response.json();
@@ -109,37 +110,38 @@ export async function broadcastTransaction(
  */
 export const fetchUTXOS = async (environment: Environment, address: string): Promise<Utxo[]> => {
   try {
-    const url = getBlockStreamUrl(environment);
+    let url = getBlockStreamUrl(environment);
 
     if (url === REGTEST_URL) {
-      const response = await fetch(REGTEST_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'curltest',
-          method: 'listunspent',
-          params: [1, 9999999, [address], true],
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + Buffer.from('user:pass').toString('base64')
-        },
-      });
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
-      return data.result.map((utxo: any) => ({
-        txid: utxo.txid,
-        vout: utxo.vout,
-        status: {
-          confirmed: utxo.confirmations > 0,
-          block_height: utxo.confirmations > 0 ? utxo.confirmations : 0,
-          block_hash: '',
-          block_time: 0,
-        },
-        value: Math.round(utxo.amount * 100000000), // Convert BTC to satoshis
-      }));
+      url = TESTNET_BLOCKSTREAM_URL
+      // const response = await fetch(REGTEST_URL, {
+      //   method: 'POST',
+      //   body: JSON.stringify({
+      //     jsonrpc: '2.0',
+      //     id: 'curltest',
+      //     method: 'listunspent',
+      //     params: [1, 9999999, [address], true],
+      //   }),
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': 'Basic ' + Buffer.from('user:pass').toString('base64')
+      //   },
+      // });
+      // const data = await response.json();
+      // if (data.error) {
+      //   throw new Error(data.error.message);
+      // }
+      // return data.result.map((utxo: any) => ({
+      //   txid: utxo.txid,
+      //   vout: utxo.vout,
+      //   status: {
+      //     confirmed: utxo.confirmations > 0,
+      //     block_height: utxo.confirmations > 0 ? utxo.confirmations : 0,
+      //     block_hash: '',
+      //     block_time: 0,
+      //   },
+      //   value: Math.round(utxo.amount * 100000000), // Convert BTC to satoshis
+      // }));
     }
 
     const response = await fetch(`${url}/address/${address}/utxo`);
